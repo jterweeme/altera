@@ -10,7 +10,7 @@ end segment;
 architecture arch of segment is
 signal dataout_xhdl1: std_logic_vector(7 downto 0);
 begin
-	dataout <= dataout_xhdl1;
+    dataout <= dataout_xhdl1;
 
     process(data4) begin
         case data4 is
