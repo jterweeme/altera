@@ -10,7 +10,7 @@ entity microcomputer is
     );
 end microcomputer;
 
-architecture struct of Microcomputer is
+architecture struct of microcomputer is
 signal n_WR, n_RD, cpuClock, uart_clk: std_logic;
 signal cpu_a: std_logic_vector(15 downto 0);
 signal cpu_out, cpu_in, basRomData, ram_out: std_logic_vector(7 downto 0);

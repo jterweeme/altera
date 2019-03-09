@@ -21,20 +21,18 @@ use ieee.numeric_std.all;
 
 entity bufferedUART is
     port (
-        clk     : in std_logic;
-        n_wr    : in  std_logic;
-        n_rd    : in  std_logic;
-        regSel  : in  std_logic;
-        dataIn  : in  std_logic_vector(7 downto 0);
-        dataOut : out std_logic_vector(7 downto 0);
+        clk, n_wr, n_rd: in std_logic;
+        regSel: in std_logic;
+        dataIn: in std_logic_vector(7 downto 0);
+        dataOut: out std_logic_vector(7 downto 0);
         n_int   : out std_logic; 
-        rxClock : in  std_logic; -- 16 x baud rate
-        txClock : in  std_logic; -- 16 x baud rate
-        rxd     : in  std_logic;
+        rxClock : in std_logic; -- 16 x baud rate
+        txClock : in std_logic; -- 16 x baud rate
+        rxd     : in std_logic;
         txd     : out std_logic;
         n_rts   : out std_logic :='0';
-        n_cts   : in  std_logic; 
-        n_dcd   : in  std_logic
+        n_cts   : in std_logic; 
+        n_dcd   : in std_logic
     );
 end bufferedUART;
 
