@@ -12,31 +12,11 @@ end seg1;
 
 architecture arch of seg1 is
 signal div_cnt: std_logic_vector(24 downto 0);
-signal data4: std_logic_vector(3 downto 0);
 signal dataout_xhdl1: std_logic_vector(7 downto 0);
-signal en_xhdl: std_logic_vector(3 downto 0);
-signal cntfirst: std_logic_vector(3 downto 0);
-signal cntsecond: std_logic_vector(3 downto 0);
-signal cntthird: std_logic_vector(3 downto 0);
-signal cntlast: std_logic_vector(3 downto 0);
-signal first_over: std_logic;
-signal second_over: std_logic;
-signal third_over: std_logic;
-signal last_over: std_logic;
-
-component segments is
-    port (clk: in std_logic_vector(1 downto 0);
-        rst: in std_logic;
-		  cntfirst: std_logic_vector(3 downto 0);
-        cntsecond: std_logic_vector(3 downto 0);
-        cntthird: std_logic_vector(3 downto 0);
-        cntlast: std_logic_vector(3 downto 0);
-        dataout: out std_logic_vector(7 downto 0);
-        en: out std_logic_vector(3 downto 0));
-end component;
-
+signal data4, en_xhdl, cntfirst, cntsecond, cntthird, cntlast: std_logic_vector(3 downto 0);
+signal first_over, second_over, third_over, last_over: std_logic;
 begin
-	 xsegments: segments port map (div_cnt(19 downto 18), rst, cntfirst, cntsecond, cntthird, cntlast, dataout_xhdl1, en_xhdl);
+	 xsegments: work.segments port map (div_cnt(19 downto 18), rst, cntfirst, cntsecond, cntthird, cntlast, dataout_xhdl1, en_xhdl);
     dataout <= dataout_xhdl1;
     en <= en_xhdl;
 

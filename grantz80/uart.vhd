@@ -39,14 +39,12 @@ entity bufferedUART is
 end bufferedUART;
 
 architecture rtl of bufferedUART is
-signal n_int_internal   : std_logic := '1';
-signal statusReg : std_logic_vector(7 downto 0) := (others => '0'); 
-signal controlReg : std_logic_vector(7 downto 0) := "00000000";
+signal n_int_internal: std_logic := '1';
+signal statusReg: std_logic_vector(7 downto 0) := (others => '0'); 
+signal controlReg: std_logic_vector(7 downto 0) := "00000000";
 signal rxBitCount, txBitCount: unsigned(3 downto 0); 
 signal rxClockCount, txClockCount: unsigned(5 downto 0); 
-signal rxCurrentByteBuffer: std_logic_vector(7 downto 0); 
-signal txBuffer: std_logic_vector(7 downto 0); 
-signal txByteLatch: std_logic_vector(7 downto 0); 
+signal rxCurrentByteBuffer, txBuffer, txByteLatch: std_logic_vector(7 downto 0); 
 signal txByteWritten: std_logic := '0';
 signal txByteSent: std_logic := '0';
 type serialStateType is ( idle, dataBit, stopBit );
@@ -132,7 +130,7 @@ begin
 		end if;
 	end process;
 
-	process( n_wr )
+	process (n_wr)
 	begin
 		if rising_edge(n_wr) then -- Standard CPU - capture data on trailing edge of wr
 			if regSel='1' then
@@ -146,7 +144,7 @@ begin
 		end if;
 	end process;
 
-	process( rxClock , reset )
+	process (rxClock, reset)
 	begin
 		if reset='1' then
 			rxState <= idle;
@@ -156,12 +154,12 @@ begin
 			case rxState is
 			when idle =>
 				if rxdFiltered='1' then -- high so idle
-					rxBitCount<=(others=>'0');
-					rxClockCount<=(others=>'0');
+					rxBitCount <= (others => '0');
+					rxClockCount <= (others => '0');
 				else -- low so in start bit
 					if rxClockCount= "111" then -- wait to half way through bit
-						rxClockCount<=(others=>'0');
-						rxState <=dataBit;
+						rxClockCount <= (others=>'0');
+						rxState <= dataBit;
 					else
 						rxClockCount <= rxClockCount+1;
 					end if;
@@ -198,8 +196,8 @@ begin
     begin
         if reset='1' then
             txState <= idle;
-            txBitCount<=(others=>'0');
-            txClockCount<=(others=>'0');
+            txBitCount <= (others=>'0');
+            txClockCount <= (others=>'0');
             txByteSent <= '0';
 		elsif falling_edge(txClock) then
 			case txState is
@@ -208,24 +206,24 @@ begin
 				if (txByteWritten /= txByteSent) and n_cts='0' and n_dcd='0' then
 					txBuffer <= txByteLatch;
 					txByteSent <= not txByteSent;
-					txState <=dataBit;
+					txState <= dataBit;
 					txd <= '0'; -- start bit
-					txBitCount<=(others=>'0');
-					txClockCount<=(others=>'0');
+					txBitCount <= (others=>'0');
+					txClockCount <= (others=>'0');
 				end if;
 			when dataBit =>
 				if txClockCount= 15 then -- 1 bit later
-					txClockCount<=(others=>'0');
+					txClockCount <= (others=>'0');
 					if txBitCount= 8 then -- 8 bits read - handle stop bit
 						txd <= '1';
-						txState<=stopBit;
+						txState <= stopBit;
 					else
 						txd <= txBuffer(0);
 						txBuffer <= '0' & txBuffer(7 downto 1); 
-						txBitCount <=txBitCount+1;
+						txBitCount <= txBitCount + 1;
 					end if;
 				else
-					txClockCount<=txClockCount+1;
+					txClockCount <= txClockCount + 1;
 				end if;
 			when stopBit =>
 				if txClockCount= 15 then

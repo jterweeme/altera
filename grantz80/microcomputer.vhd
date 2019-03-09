@@ -30,10 +30,9 @@ begin
     ram1: entity work.ram
         port map(cpu_a(11 downto 0), clk, cpu_out, not(n_memWR or n_ram_cs), ram_out);
 
-    io1: entity work.bufferedUART port map(clk => clk, n_wr => n_interface1CS or n_ioWR,
-        n_rd => n_interface1CS or n_ioRD,
-        n_int => n_int1, regSel => cpu_a(0), dataIn => cpu_out, dataOut => interface1DataOut,
-        rxClock => uart_clk, txClock => uart_clk, rxd => rxd1, txd => txd1, n_cts => '0',
+    io1: entity work.bufferedUART port map(clk, n_interface1CS or n_ioWR,
+        n_interface1CS or n_ioRD, cpu_a(0), cpu_out, interface1DataOut,
+        n_int1, uart_clk, uart_clk, rxd1, txd1, n_cts => '0',
         n_dcd => '0');
 
     io2: entity work.aaron port map(n_aaronCS or n_ioWR, n_reset, cpu_out, leds);
