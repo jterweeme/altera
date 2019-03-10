@@ -1,57 +1,38 @@
 
---640x480
-LIBRARY IEEE;
-USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL;
-USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+--rood, groen, blauw: resolutie 640x480
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-	--Define The Core Entity
-ENTITY ask2ca IS
-PORT(   
-		--Counter/VGA Timing
-		clk		: IN STD_LOGIC;
-		
-		--VGA Signals/Pins (Outputs)
-		hsync,
-		vsync,
-		red,
-		green,
-		blue : OUT STD_LOGIC);
-		
-		--Sync Counters
---		row,
---		column	: OUT STD_LOGIC_VECTOR(9 DOWNTO 0));
+entity ask2ca is
+    port(
+        clk: in std_logic;
+        hsync, vsync, red, green, blue: out std_logic);
 end ask2ca;
 
-	--Define The Architecture Of The Entity
 architecture behavior of ask2ca is
 signal clk25: STD_LOGIC;
 signal h_sync, v_sync: STD_LOGIC;
 signal video_en, horizontal_en, vertical_en: STD_LOGIC;
 signal red_signal, green_signal, blue_signal: STD_LOGIC;
-signal h_cnt, v_cnt: STD_LOGIC_VECTOR(9 DOWNTO 0);
+signal h_cnt, v_cnt: unsigned(9 downto 0);
 begin
 	video_en <= horizontal_en AND vertical_en;
 
---Generate 25Mhz Clock
-process (clk)
-begin
-	if clk'event and clk='1' then
-	  if (clk25 = '0')then
-	    clk25 <= '1' after 2 ns;
-	  else
-	    clk25 <= '0' after 2 ns;
-		end if;
-	end if;
-end process;	
+    clockdiv: process (clk)
+    begin
+    	if clk'event and clk='1' then
+    	  if (clk25 = '0')then
+    	    clk25 <= '1' after 2 ns;
+    	  else
+    	    clk25 <= '0' after 2 ns;
+    		end if;
+    	end if;
+    end process;	
 
-PROCESS
---variable cnt: integer range 0 to 25175000;
+process
 variable cnt: integer range 0 to 25000000;
-
-BEGIN
-
-	--WAIT UNTIL(clk'EVENT) AND (clk = '1');
+begin
 	WAIT UNTIL(clk25'EVENT) AND (clk25 = '1');
 	
 	--IF(cnt = 25175000)THEN	
@@ -65,11 +46,11 @@ BEGIN
 	--Horizontal Sync
 	
 		--Reset Horizontal Counter
-	IF (h_cnt = 799) THEN
+	if (h_cnt = 799) then
 		h_cnt <= "0000000000";
-	ELSE
+	else
 		h_cnt <= h_cnt + 1;
-	END IF;
+	end if;
 
 		--Generate Horizontal Data
 				--160 Rows Of Red
