@@ -1,23 +1,24 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 entity ask2ca is
-    port(CLK: IN STD_LOGIC;
-        SPEAKER: OUT STD_LOGIC);
+    port(CLK: in std_logic;
+        SPEAKER: out std_logic);
 end entity;
 
 architecture song of ask2ca is
-signal DRIVER, ORIGIN: std_logic_vector(12 downto 0);
-signal COUNTER: INTEGER RANGE 0 TO 140;
-signal COUNTER1: INTEGER RANGE 0 TO 3;
-signal COUNTER2: INTEGER RANGE 1 TO 10000000;
+signal driver: unsigned(12 downto 0);
+signal origin: std_logic_vector(12 downto 0);
+signal COUNTER: integer range 0 to 140;
+signal COUNTER1: integer range 0 to 3;
+signal COUNTER2: integer range 1 to 10000000;
 signal DIGIT: std_logic_vector(6 downto 0);
-signal COUNT: std_logic_vector(1 downto 0); 
+signal COUNT: unsigned(1 downto 0); 
 signal CARRIER, CLK_4MHZ, CLK_4HZ: std_logic;
 begin
-PROCESS(CLK) BEGIN
-    IF CLK'EVENT AND CLK='1' THEN
+process(CLK) begin
+    if CLK'event and CLK='1' then
         IF COUNTER1 = 1 THEN
             CLK_4MHZ <= '1';
             COUNTER1 <= 2;
@@ -37,26 +38,26 @@ PROCESS(CLK) BEGIN
         ELSE
             COUNTER2 <= COUNTER2 + 1;
         END IF;
-    END IF;
-END PROCESS;
+    end if;
+end process;
 
-PROCESS(CLK_4MHZ)
-BEGIN
-    IF CLK_4MHZ'EVENT AND CLK_4MHZ='1' THEN
-        IF DRIVER="1111111111111" THEN
-            CARRIER<='1';
-            DRIVER<=ORIGIN;
-        ELSE
-            DRIVER<=DRIVER+1;
+process(CLK_4MHZ)
+begin
+    if CLK_4MHZ'event and CLK_4MHZ='1' then
+        if driver="1111111111111" then
+            CARRIER <= '1';
+            driver <= unsigned(origin);
+        else
+            driver <= driver + 1;
             CARRIER<='0';
-        END IF;
-    END IF;
-END PROCESS;
+        end if;
+    end if;
+end process;
 
 PROCESS(CARRIER)
 BEGIN
 IF CARRIER'EVENT AND CARRIER='1' THEN
-    COUNT<=COUNT+1;
+    COUNT <= COUNT+1;
     IF COUNT="00"THEN
         SPEAKER<='1';
     ELSE
@@ -220,17 +221,17 @@ begin
     end case;
 
     case DIGIT is
-    when "0000011" => ORIGIN<="0100001001100";
-    when "0000101" => ORIGIN<="0110000010001";
-    when "0000110" => ORIGIN<="0111000111110";
-    when "0000111" => ORIGIN<="1000000101101";
-    when "0001000" => ORIGIN<="1000100010001";
-    when "0010000" => ORIGIN<="1001010110010";
-    when "0011000" => ORIGIN<="1010000100101";
-    when "0101000" => ORIGIN<="1011000001000";
-    when "0110000" => ORIGIN<="1011100011110";
-    when "1000000" => ORIGIN<="1100010001000";
-    when others => ORIGIN<="1111111111111";
+    when "0000011" => origin <="0100001001100";
+    when "0000101" => origin <="0110000010001";
+    when "0000110" => origin <="0111000111110";
+    when "0000111" => origin <="1000000101101";
+    when "0001000" => origin <="1000100010001";
+    when "0010000" => origin <="1001010110010";
+    when "0011000" => origin <="1010000100101";
+    when "0101000" => origin <="1011000001000";
+    when "0110000" => origin <="1011100011110";
+    when "1000000" => origin <="1100010001000";
+    when others => origin <="1111111111111";
     end case;
 end process;
 end song;
