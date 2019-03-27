@@ -74,7 +74,7 @@ use work.T80_Pack.all;
 
 entity T80 is
     generic(
-        Mode : integer := 0;	-- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
+        Mode : integer := 1;	-- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
         IOWait : integer := 0;	-- 1 => Single cycle I/O, 1 => Std I/O cycle
         Flag_C : integer := 0;
         Flag_N : integer := 1;
@@ -192,8 +192,7 @@ architecture rtl of T80 is
 	signal MCycles			: std_logic_vector(2 downto 0);
 
 	-- Micro code outputs
-	signal MCycles_d		: std_logic_vector(2 downto 0);
-	signal TStates			: std_logic_vector(2 downto 0);
+	signal MCycles_d, TStates: std_logic_vector(2 downto 0);
 	signal IntCycle			: std_logic;
 	signal NMICycle			: std_logic;
 	signal Inc_PC			: std_logic;
@@ -243,7 +242,6 @@ begin
 
 	mcode : T80_MCode
 		generic map(
-			Mode => Mode,
 			Flag_C => Flag_C,
 			Flag_N => Flag_N,
 			Flag_P => Flag_P,
@@ -309,7 +307,6 @@ begin
 	alu : T80_ALU
 		generic map(
 			Mode => Mode,
-			Flag_C => Flag_C,
 			Flag_N => Flag_N,
 			Flag_P => Flag_P,
 			Flag_X => Flag_X,
@@ -400,11 +397,9 @@ begin
 			-- MCycle = 1 and TState = 1, 2, or 3
 
 				if TState = 2 and Wait_n = '1' then
-					if Mode < 2 then
-						A(7 downto 0) <= std_logic_vector(R);
-						A(15 downto 8) <= I;
-						R(6 downto 0) <= R(6 downto 0) + 1;
-					end if;
+					A(7 downto 0) <= std_logic_vector(R);
+					A(15 downto 8) <= I;
+					R(6 downto 0) <= R(6 downto 0) + 1;
 
 					if Jump = '0' and Call = '0' and NMICycle = '0' and IntCycle = '0' and not (Halt_FF = '1' or Halt = '1') then
 						PC <= PC + 1;
@@ -483,26 +478,12 @@ begin
 								end if;
 							end if;
 						when aIOA =>
-							if Mode = 3 then
-								-- Memory map I/O on GBZ80
-								A(15 downto 8) <= (others => '1');
-							elsif Mode = 2 then
-								-- Duplicate I/O address on 8080
-								A(15 downto 8) <= DI_Reg;
-							else
-								A(15 downto 8) <= ACC;
-							end if;
+							A(15 downto 8) <= ACC;
 							A(7 downto 0) <= DI_Reg;
 						when aSP =>
 							A <= std_logic_vector(SP);
 						when aBC =>
-							if Mode = 3 and IORQ_i = '1' then
-								-- Memory map I/O on GBZ80
-								A(15 downto 8) <= (others => '1');
-								A(7 downto 0) <= RegBusC(7 downto 0);
-							else
-								A <= RegBusC;
-							end if;
+							A <= RegBusC;
 						when aDE =>
 							A <= RegBusC;
 						when aZI =>
@@ -616,18 +597,9 @@ begin
 			end if;
 
 			if (I_DJNZ = '0' and Save_ALU_r = '1') or ALU_Op_r = "1001" then
-				if Mode = 3 then
-					F(6) <= F_Out(6);
-					F(5) <= F_Out(5);
-					F(7) <= F_Out(7);
-					if PreserveC_r = '0' then
-						F(4) <= F_Out(4);
-					end if;
-				else
-					F(7 downto 1) <= F_Out(7 downto 1);
-					if PreserveC_r = '0' then
-						F(Flag_C) <= F_Out(0);
-					end if;
+				F(7 downto 1) <= F_Out(7 downto 1);
+				if PreserveC_r = '0' then
+					F(Flag_C) <= F_Out(0);
 				end if;
 			end if;
 			if T_Res = '1' and I_INRC = '1' then
@@ -728,9 +700,7 @@ begin
 					RegAddrC <= XY_State(1) & "11";
 				end if;
 
-				if I_DJNZ = '1' and Save_ALU_r = '1' and Mode < 2 then
-					IncDecZ <= F_Out(Flag_Z);
-				end if;
+				IncDecZ <= F_Out(Flag_Z);
 				if (TState = 2 or (TState = 3 and MCycle = "001")) and IncDec_16(2 downto 0) = "100" then
 					if ID16 = 0 then
 						IncDecZ <= '0';
@@ -1021,9 +991,6 @@ begin
 						if NextIs_XY_Fetch = '1' then
 							MCycle <= "110";
 							Pre_XY_F_M <= MCycle;
-							if IR = "00110110" and Mode = 0 then
-								Pre_XY_F_M <= "010";
-							end if;
 						elsif (MCycle = "111") or
 							(MCycle = "110" and Mode = 1 and ISet /= "01") then
 							MCycle <= std_logic_vector(unsigned(Pre_XY_F_M) + 1);

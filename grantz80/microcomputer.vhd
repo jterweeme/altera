@@ -20,8 +20,7 @@ signal n_ram_cs, n_basRomCS, n_interface1CS, n_aaronCS: std_logic;
 signal serialClkCount: unsigned(15 downto 0);
 signal cpuClkCount: unsigned(5 downto 0); 
 begin
-    cpu1: entity work.t80s generic map(mode => 1, t2write => 1, iowait => 0)
-        port map(n_reset, cpuClock, wait_n => '1', int_n => '1', nmi_n => '1',
+    cpu1: entity work.t80s port map(n_reset, cpuClock, wait_n => '1', int_n => '1', nmi_n => '1',
             busrq_n => '1', mreq_n => n_MREQ, iorq_n => n_IORQ, rd_n => n_RD, wr_n => n_WR,
             a => cpu_a, di => cpu_in, do => cpu_out);
 

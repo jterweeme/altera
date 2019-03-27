@@ -67,7 +67,7 @@ use IEEE.numeric_std.all;
 
 entity T80_MCode is
 	generic(
-		Mode : integer := 0;
+		Mode : integer := 1;
 		Flag_C : integer := 0;
 		Flag_N : integer := 1;
 		Flag_P : integer := 2;

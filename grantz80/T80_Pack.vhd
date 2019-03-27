@@ -112,7 +112,6 @@ package T80_Pack is
 
 	component T80_MCode
 	generic(
-		Mode : integer := 0;
 		Flag_C : integer := 0;
 		Flag_N : integer := 1;
 		Flag_P : integer := 2;
@@ -182,7 +181,6 @@ package T80_Pack is
 	component T80_ALU
 	generic(
 		Mode : integer := 0;
-		Flag_C : integer := 0;
 		Flag_N : integer := 1;
 		Flag_P : integer := 2;
 		Flag_X : integer := 3;
