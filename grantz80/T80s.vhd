@@ -47,21 +47,21 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity T80s is
-	port(
-		RESET_n: in std_logic;
-		CLK_n: in std_logic;
-		M1_n: out std_logic;
-		MREQ_n: out std_logic;
-		IORQ_n: out std_logic;
-		RD_n: out std_logic;
-		WR_n: out std_logic;
-		RFSH_n: out std_logic;
-		HALT_n: out std_logic;
-		BUSAK_n: out std_logic;
-		A: out std_logic_vector(15 downto 0);
-		DI: in std_logic_vector(7 downto 0);
-		DO: out std_logic_vector(7 downto 0)
-	);
+port(
+    reset_n: in std_logic;
+    clk_n: in std_logic;
+    m1_n: out std_logic;
+    mreq_n: out std_logic;
+    iorq_n: out std_logic;
+    RD_n: out std_logic;
+    WR_n: out std_logic;
+    RFSH_n: out std_logic;
+    HALT_n: out std_logic;
+    BUSAK_n: out std_logic;
+    A: out std_logic_vector(15 downto 0);
+    DI: in std_logic_vector(7 downto 0);
+    DO: out std_logic_vector(7 downto 0)
+);
 end T80s;
 
 architecture rtl of T80s is
@@ -71,20 +71,19 @@ signal MCycle: std_logic_vector(2 downto 0);
 signal TState: std_logic_vector(2 downto 0);
 begin
     u0: entity work.T80 port map(
-        CEN => '1',
+        reset_n,
+        clk_n,
         M1_n => M1_n,
         IORQ => IORQ,
         NoRead => NoRead,
         Write => Write,
         RFSH_n => RFSH_n,
         HALT_n => HALT_n,
-        WAIT_n => '1',
+        --WAIT_n => '1',
         INT_n => '1',
         NMI_n => '1',
-        RESET_n => RESET_n,
         BUSRQ_n => '1',
         BUSAK_n => BUSAK_n,
-        CLK_n => CLK_n,
         A => A,
         DInst => DI,
         DI => DI_Reg,
