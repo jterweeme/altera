@@ -25,9 +25,9 @@ begin
         end if;
     end process;
 
-    r <= "11111111" when v_cnt >= 0 and v_cnt <= 159 else "00000000";
+    r <= "11111111" when v_cnt >= 0 and v_cnt <= 319 else "00000000";
     g <= "11111111" when v_cnt >= 160 and v_cnt <= 319 else "00000000";
-    b <= "11111111" when v_cnt >= 320 and v_cnt <= 479 else "00000000";
+    b <= "11111111" when v_cnt >= 160 and v_cnt <= 479 else "00000000";
     hsync <= '0' when h_cnt <= 755 and h_cnt >= 659 else '1';
     vsync <= '0' when v_cnt <= 494 and v_cnt >= 493 else '1';
     vga_clk <= clk25;
@@ -48,7 +48,7 @@ begin
             end if;
         end if;
     end process;
-end;
+end behavior;
 
 
 

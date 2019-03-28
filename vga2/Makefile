@@ -1,10 +1,7 @@
 all: spectrum.sof
 
 spectrum.sof:
-	quartus_sh --flow compile vga1 -c de2_115
-
-download:
-	quartus_pgm de2_115.cdf
+	quartus_sh --flow compile vga1 -c ask2ca
 
 clean:
 	rm -Rvf db incremental_db simulation greybox_tmp output_files

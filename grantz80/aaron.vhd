@@ -1,19 +1,16 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use ieee.std_logic_unsigned.all;
 
 entity aaron is
     port (
-        n_wr    : in  std_logic;
-        reset_n    : in  std_logic;
-        dataIn  : in  std_logic_vector(7 downto 0);
-        dataOut  : out  std_logic_vector(7 downto 0)
+        n_wr: in std_logic;
+        reset_n: in std_logic;
+        dataIn: in std_logic_vector(7 downto 0);
+        dataOut: out std_logic_vector(7 downto 0)
     );
 end aaron;
 
 architecture rtl of aaron is
-signal n_int_internal   : std_logic := '1';
 begin
     process(n_wr)
     begin
@@ -30,7 +27,7 @@ begin
             dataOut <= dataIn;
         end if;
     end process;
-end rtl;
+end;
 
 
 
