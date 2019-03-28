@@ -74,80 +74,70 @@ use ieee.numeric_std.all;
 entity T80 is
     port(
         RESET_n: in std_logic;
-		CLK_n: in std_logic;
-		CEN: in std_logic;
-		WAIT_n: in std_logic;
-		INT_n: in std_logic;
-		NMI_n: in std_logic;
-		BUSRQ_n: in std_logic;
-		M1_n: out std_logic;
-		IORQ: out std_logic;
-		NoRead: out std_logic;
-		Write: out std_logic;
-		RFSH_n: out std_logic;
-		HALT_n: out std_logic;
-		BUSAK_n: out std_logic;
-		A: out std_logic_vector(15 downto 0);
-		DInst		: in std_logic_vector(7 downto 0);
-		DI			: in std_logic_vector(7 downto 0);
-		DO			: out std_logic_vector(7 downto 0);
-		MC			: out std_logic_vector(2 downto 0);
-		TS			: out std_logic_vector(2 downto 0);
-		IntCycle_n	: out std_logic;
-		IntE		: out std_logic;
-		Stop		: out std_logic
-	);
+        CLK_n: in std_logic;
+        CEN: in std_logic;
+        WAIT_n: in std_logic;
+        INT_n: in std_logic;
+        NMI_n: in std_logic;
+        BUSRQ_n: in std_logic;
+        M1_n: out std_logic;
+        IORQ: out std_logic;
+        NoRead: out std_logic;
+        Write: out std_logic;
+        RFSH_n: out std_logic;
+        HALT_n: out std_logic;
+        BUSAK_n: out std_logic;
+        A: out std_logic_vector(15 downto 0);
+        DInst: in std_logic_vector(7 downto 0);
+        DI: in std_logic_vector(7 downto 0);
+        DO: out std_logic_vector(7 downto 0);
+        MC: out std_logic_vector(2 downto 0);
+        TS: out std_logic_vector(2 downto 0);
+        IntCycle_n: out std_logic;
+        IntE: out std_logic;
+        Stop: out std_logic
+);
 end T80;
 
 architecture rtl of T80 is
-    constant Mode: integer := 1;
-    constant IOWait: integer := 0;
-    constant Flag_C: integer := 0;
-    constant Flag_N: integer := 1;
-    constant Flag_P: integer := 2;
-    constant Flag_X: integer := 3;
-    constant Flag_H: integer := 4;
-    constant Flag_Y: integer := 5;
-    constant Flag_Z: integer := 6;
-    constant Flag_S: integer := 7;
-	constant aNone: std_logic_vector(2 downto 0) := "111";
-	constant aBC: std_logic_vector(2 downto 0) := "000";
-	constant aDE: std_logic_vector(2 downto 0) := "001";
-	constant aXY: std_logic_vector(2 downto 0) := "010";
-	constant aIOA: std_logic_vector(2 downto 0) := "100";
-	constant aSP: std_logic_vector(2 downto 0) := "101";
-	constant aZI: std_logic_vector(2 downto 0) := "110";
+    constant aNone: std_logic_vector(2 downto 0) := "111";
+    constant aBC: std_logic_vector(2 downto 0) := "000";
+    constant aDE: std_logic_vector(2 downto 0) := "001";
+    constant aXY: std_logic_vector(2 downto 0) := "010";
+    constant aIOA: std_logic_vector(2 downto 0) := "100";
+    constant aSP: std_logic_vector(2 downto 0) := "101";
+    constant aZI: std_logic_vector(2 downto 0) := "110";
 
-	-- Registers
-	signal ACC, F, Ap, Fp, I, RegDIH, RegDIL: std_logic_vector(7 downto 0);
-	signal R				: unsigned(7 downto 0);
-	signal SP, PC			: unsigned(15 downto 0);
-	signal RegBusA			: std_logic_vector(15 downto 0);
-	signal RegBusB			: std_logic_vector(15 downto 0);
-	signal RegBusC			: std_logic_vector(15 downto 0);
-	signal RegAddrA_r		: std_logic_vector(2 downto 0);
-	signal RegAddrA			: std_logic_vector(2 downto 0);
-	signal RegAddrB_r		: std_logic_vector(2 downto 0);
-	signal RegAddrB			: std_logic_vector(2 downto 0);
-	signal RegAddrC			: std_logic_vector(2 downto 0);
-	signal RegWEH			: std_logic;
-	signal RegWEL			: std_logic;
-	signal Alternate		: std_logic;
+    -- Registers
+    signal ACC, F, Ap, Fp, I, RegDIH, RegDIL: std_logic_vector(7 downto 0);
+    signal R: unsigned(7 downto 0);
+    signal SP, PC: unsigned(15 downto 0);
+    signal RegBusA: std_logic_vector(15 downto 0);
+    signal RegBusB: std_logic_vector(15 downto 0);
+    signal RegBusC: std_logic_vector(15 downto 0);
+    signal RegAddrA_r: std_logic_vector(2 downto 0);
+    signal RegAddrA: std_logic_vector(2 downto 0);
+    signal RegAddrB_r: std_logic_vector(2 downto 0);
+    signal RegAddrB: std_logic_vector(2 downto 0);
+    signal RegAddrC: std_logic_vector(2 downto 0);
+    signal RegWEH: std_logic;
+    signal RegWEL: std_logic;
+    signal Alternate: std_logic;
 
-	-- Help Registers
-	signal TmpAddr			: std_logic_vector(15 downto 0);	-- Temporary address register
-	signal IR				: std_logic_vector(7 downto 0);		-- Instruction register
-	signal ISet				: std_logic_vector(1 downto 0);		-- Instruction set selector
-	signal RegBusA_r		: std_logic_vector(15 downto 0);
+-- Help Registers
+signal TmpAddr: std_logic_vector(15 downto 0);	-- Temporary address register
+signal IR: std_logic_vector(7 downto 0);		-- Instruction register
+signal ISet: std_logic_vector(1 downto 0);		-- Instruction set selector
+signal RegBusA_r: std_logic_vector(15 downto 0);
 
-	signal ID16				: signed(15 downto 0);
-	signal Save_Mux			: std_logic_vector(7 downto 0);
+signal ID16: signed(15 downto 0);
+signal Save_Mux: std_logic_vector(7 downto 0);
 
-	signal TState			: unsigned(2 downto 0);
-	signal MCycle			: std_logic_vector(2 downto 0);
-	signal IntE_FF1			: std_logic;
-	signal IntE_FF2			: std_logic;
-	signal Halt_FF			: std_logic;
+signal TState: unsigned(2 downto 0);
+signal MCycle: std_logic_vector(2 downto 0);
+signal IntE_FF1: std_logic;
+signal IntE_FF2: std_logic;
+signal Halt_FF: std_logic;
 	signal BusReq_s			: std_logic;
 	signal BusAck			: std_logic;
 	signal ClkEn			: std_logic;
@@ -472,26 +462,26 @@ begin
 					if I_CPL = '1' then
 						-- CPL
 						ACC <= not ACC;
-						F(Flag_Y) <= not ACC(5);
-						F(Flag_H) <= '1';
-						F(Flag_X) <= not ACC(3);
-						F(Flag_N) <= '1';
+						F(5) <= not ACC(5);
+						F(4) <= '1';
+						F(3) <= not ACC(3);
+						F(1) <= '1';
 					end if;
 					if I_CCF = '1' then
 						-- CCF
-						F(Flag_C) <= not F(Flag_C);
-						F(Flag_Y) <= ACC(5);
-						F(Flag_H) <= F(Flag_C);
-						F(Flag_X) <= ACC(3);
-						F(Flag_N) <= '0';
+						F(0) <= not F(0);
+						F(5) <= ACC(5);
+						F(4) <= F(0);
+						F(3) <= ACC(3);
+						F(1) <= '0';
 					end if;
 					if I_SCF = '1' then
 						-- SCF
-						F(Flag_C) <= '1';
-						F(Flag_Y) <= ACC(5);
-						F(Flag_H) <= '0';
-						F(Flag_X) <= ACC(3);
-						F(Flag_N) <= '0';
+						F(0) <= '1';
+						F(5) <= ACC(5);
+						F(4) <= '0';
+						F(3) <= ACC(3);
+						F(1) <= '0';
 					end if;
 				end if;
 
@@ -552,10 +542,10 @@ begin
 					case Special_LD(1 downto 0) is
 					when "00" =>
 						ACC <= I;
-						F(Flag_P) <= IntE_FF2;
+						F(2) <= IntE_FF2;
 					when "01" =>
 						ACC <= std_logic_vector(R);
-						F(Flag_P) <= IntE_FF2;
+						F(2) <= IntE_FF2;
 					when "10" =>
 						I <= ACC;
 					when others =>
@@ -567,19 +557,19 @@ begin
 			if (I_DJNZ = '0' and Save_ALU_r = '1') or ALU_Op_r = "1001" then
 				F(7 downto 1) <= F_Out(7 downto 1);
 				if PreserveC_r = '0' then
-					F(Flag_C) <= F_Out(0);
+					F(0) <= F_Out(0);
 				end if;
 			end if;
 			if T_Res = '1' and I_INRC = '1' then
-				F(Flag_H) <= '0';
-				F(Flag_N) <= '0';
+				F(4) <= '0';
+				F(1) <= '0';
 				if DI_Reg(7 downto 0) = "00000000" then
-					F(Flag_Z) <= '1';
+					F(6) <= '1';
 				else
-					F(Flag_Z) <= '0';
+					F(6) <= '0';
 				end if;
-				F(Flag_S) <= DI_Reg(7);
-				F(Flag_P) <= not (DI_Reg(0) xor DI_Reg(1) xor DI_Reg(2) xor DI_Reg(3) xor
+				F(7) <= DI_Reg(7);
+				F(2) <= not (DI_Reg(0) xor DI_Reg(1) xor DI_Reg(2) xor DI_Reg(3) xor
 					DI_Reg(4) xor DI_Reg(5) xor DI_Reg(6) xor DI_Reg(7));
 			end if;
 
@@ -605,13 +595,13 @@ begin
 			end if;
 
 			if TState = 1 and I_BT = '1' then
-				F(Flag_X) <= ALU_Q(3);
-				F(Flag_Y) <= ALU_Q(1);
-				F(Flag_H) <= '0';
-				F(Flag_N) <= '0';
+				F(3) <= ALU_Q(3);
+				F(5) <= ALU_Q(1);
+				F(4) <= '0';
+				F(1) <= '0';
 			end if;
 			if I_BC = '1' or I_BT = '1' then
-				F(Flag_P) <= IncDecZ;
+				F(2) <= IncDecZ;
 			end if;
 
 			if (TState = 1 and Save_ALU_r = '0' and Auto_Wait_t1 = '0') or
@@ -668,7 +658,7 @@ begin
 					RegAddrC <= XY_State(1) & "11";
 				end if;
 
-				IncDecZ <= F_Out(Flag_Z);
+				IncDecZ <= F_Out(6);
 				if (TState = 2 or (TState = 3 and MCycle = "001")) and IncDec_16(2 downto 0) = "100" then
 					if ID16 = 0 then
 						IncDecZ <= '0';
@@ -868,128 +858,126 @@ begin
 -- Syncronise inputs
 --
 -------------------------------------------------------------------------
-	process (RESET_n, CLK_n)
-		variable OldNMI_n : std_logic;
-	begin
-		if RESET_n = '0' then
-			BusReq_s <= '0';
-			INT_s <= '0';
-			NMI_s <= '0';
-			OldNMI_n := '0';
-		elsif CLK_n'event and CLK_n = '1' then
-			if CEN = '1' then
-			BusReq_s <= not BUSRQ_n;
-			INT_s <= not INT_n;
-			if NMICycle = '1' then
-				NMI_s <= '0';
-			elsif NMI_n = '0' and OldNMI_n = '1' then
-				NMI_s <= '1';
-			end if;
-			OldNMI_n := NMI_n;
-			end if;
-		end if;
-	end process;
+    process (RESET_n, CLK_n)
+        variable OldNMI_n : std_logic;
+    begin
+        if RESET_n = '0' then
+            BusReq_s <= '0';
+            INT_s <= '0';
+            NMI_s <= '0';
+            OldNMI_n := '0';
+        elsif CLK_n'event and CLK_n = '1' then
+            if CEN = '1' then
+                BusReq_s <= not BUSRQ_n;
+                INT_s <= not INT_n;
+                if NMICycle = '1' then
+                    NMI_s <= '0';
+                elsif NMI_n = '0' and OldNMI_n = '1' then
+                    NMI_s <= '1';
+                end if;
+                OldNMI_n := NMI_n;
+            end if;
+        end if;
+    end process;
 
 -------------------------------------------------------------------------
 --
 -- Main state machine
 --
 -------------------------------------------------------------------------
-	process (RESET_n, CLK_n)
-	begin
-		if RESET_n = '0' then
-			MCycle <= "001";
-			TState <= "000";
-			Pre_XY_F_M <= "000";
-			Halt_FF <= '0';
-			BusAck <= '0';
-			NMICycle <= '0';
-			IntCycle <= '0';
-			IntE_FF1 <= '0';
-			IntE_FF2 <= '0';
-			No_BTR <= '0';
-			Auto_Wait_t1 <= '0';
-			Auto_Wait_t2 <= '0';
-			M1_n <= '1';
-		elsif CLK_n'event and CLK_n = '1' then
-			if CEN = '1' then
-			if T_Res = '1' then
-				Auto_Wait_t1 <= '0';
-			else
-				Auto_Wait_t1 <= Auto_Wait or IORQ_i;
-			end if;
-			Auto_Wait_t2 <= Auto_Wait_t1;
-			No_BTR <= (I_BT and (not IR(4) or not F(Flag_P))) or
-					(I_BC and (not IR(4) or F(Flag_Z) or not F(Flag_P))) or
-					(I_BTR and (not IR(4) or F(Flag_Z)));
-			if TState = 2 then
-				if SetEI = '1' then
-					IntE_FF1 <= '1';
-					IntE_FF2 <= '1';
-				end if;
-				if I_RETN = '1' then
-					IntE_FF1 <= IntE_FF2;
-				end if;
-			end if;
-			if TState = 3 then
-				if SetDI = '1' then
-					IntE_FF1 <= '0';
-					IntE_FF2 <= '0';
-				end if;
-			end if;
-			if IntCycle = '1' or NMICycle = '1' then
-				Halt_FF <= '0';
-			end if;
-			if MCycle = "001" and TState = 2 and Wait_n = '1' then
-				M1_n <= '1';
-			end if;
-			if BusReq_s = '1' and BusAck = '1' then
-			else
-				BusAck <= '0';
-				if TState = 2 and Wait_n = '0' then
-				elsif T_Res = '1' then
-					if Halt = '1' then
-						Halt_FF <= '1';
-					end if;
-					if BusReq_s = '1' then
-						BusAck <= '1';
-					else
-						TState <= "001";
-						if NextIs_XY_Fetch = '1' then
-							MCycle <= "110";
-							Pre_XY_F_M <= MCycle;
-						elsif (MCycle = "111") or
-							(MCycle = "110" and Mode = 1 and ISet /= "01") then
-							MCycle <= std_logic_vector(unsigned(Pre_XY_F_M) + 1);
-						elsif (MCycle = MCycles) or
-							No_BTR = '1' or
-							(MCycle = "010" and I_DJNZ = '1' and IncDecZ = '1') then
-							M1_n <= '0';
-							MCycle <= "001";
-							IntCycle <= '0';
-							NMICycle <= '0';
-							if NMI_s = '1' and Prefix = "00" then
-								NMICycle <= '1';
-								IntE_FF1 <= '0';
-							elsif (IntE_FF1 = '1' and INT_s = '1') and Prefix = "00" and SetEI = '0' then
-								IntCycle <= '1';
-								IntE_FF1 <= '0';
-								IntE_FF2 <= '0';
-							end if;
-						else
-							MCycle <= std_logic_vector(unsigned(MCycle) + 1);
-						end if;
-					end if;
-				else
-					if (Auto_Wait = '1' and Auto_Wait_t2 = '0') nor
-						(IOWait = 1 and IORQ_i = '1' and Auto_Wait_t1 = '0') then
-						TState <= TState + 1;
-					end if;
-				end if;
-			end if;
-            if TState = 0 then
-                M1_n <= '0';
-            end if;
+    process (RESET_n, CLK_n)
+    begin
+        if RESET_n = '0' then
+            MCycle <= "001";
+            TState <= "000";
+            Pre_XY_F_M <= "000";
+            Halt_FF <= '0';
+            BusAck <= '0';
+            NMICycle <= '0';
+            IntCycle <= '0';
+            IntE_FF1 <= '0';
+            IntE_FF2 <= '0';
+            No_BTR <= '0';
+            Auto_Wait_t1 <= '0';
+            Auto_Wait_t2 <= '0';
+            M1_n <= '1';
+        elsif CLK_n'event and CLK_n = '1' then
+            if CEN = '1' then
+                if T_Res = '1' then
+                    Auto_Wait_t1 <= '0';
+                else
+                    Auto_Wait_t1 <= Auto_Wait or IORQ_i;
+                end if;
+                Auto_Wait_t2 <= Auto_Wait_t1;
+
+                No_BTR <= (I_BT and (not IR(4) or not F(2))) or
+                    (I_BC and (not IR(4) or F(6) or not F(2))) or
+                    (I_BTR and (not IR(4) or F(6)));
+
+                if TState = 2 then
+                    if SetEI = '1' then
+                        IntE_FF1 <= '1';
+                        IntE_FF2 <= '1';
+                    end if;
+                    if I_RETN = '1' then
+                        IntE_FF1 <= IntE_FF2;
+                    end if;
+                end if;
+                if TState = 3 then
+                    if SetDI = '1' then
+                        IntE_FF1 <= '0';
+                        IntE_FF2 <= '0';
+                    end if;
+                end if;
+                if IntCycle = '1' or NMICycle = '1' then
+                    Halt_FF <= '0';
+                end if;
+                if MCycle = "001" and TState = 2 and Wait_n = '1' then
+                    M1_n <= '1';
+                end if;
+                if BusReq_s = '1' and BusAck = '1' then
+                else
+                    BusAck <= '0';
+                    if TState = 2 and Wait_n = '0' then
+                    elsif T_Res = '1' then
+                        if Halt = '1' then
+                            Halt_FF <= '1';
+                        end if;
+                        if BusReq_s = '1' then
+                            BusAck <= '1';
+                        else
+                            TState <= "001";
+                            if NextIs_XY_Fetch = '1' then
+                                MCycle <= "110";
+                                Pre_XY_F_M <= MCycle;
+                            elsif (MCycle = "111") or (MCycle = "110" and ISet /= "01") then
+                                MCycle <= std_logic_vector(unsigned(Pre_XY_F_M) + 1);
+                            elsif (MCycle = MCycles) or No_BTR = '1' or (MCycle = "010" and I_DJNZ = '1' and IncDecZ = '1') then
+                                M1_n <= '0';
+                                MCycle <= "001";
+                                IntCycle <= '0';
+                                NMICycle <= '0';
+                                if NMI_s = '1' and Prefix = "00" then
+                                    NMICycle <= '1';
+                                    IntE_FF1 <= '0';
+                                elsif (IntE_FF1 = '1' and INT_s = '1') and Prefix = "00" and SetEI = '0' then
+                                    IntCycle <= '1';
+                                    IntE_FF1 <= '0';
+                                    IntE_FF2 <= '0';
+                                end if;
+                            else
+                                MCycle <= std_logic_vector(unsigned(MCycle) + 1);
+                            end if;
+                        end if;
+                    else
+                        if not (Auto_Wait = '1' and Auto_Wait_t2 = '0') then
+                            TState <= TState + 1;
+                        end if;
+                    end if;
+                end if;
+                if TState = 0 then
+                    M1_n <= '0';
+                end if;
             end if;
         end if;
     end process;

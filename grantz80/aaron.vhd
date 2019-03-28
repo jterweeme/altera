@@ -12,7 +12,7 @@ end aaron;
 
 architecture rtl of aaron is
 begin
-    process(n_wr)
+    process (reset_n, n_wr)
     begin
         if reset_n = '0' then
             dataOut(0) <= '0';
