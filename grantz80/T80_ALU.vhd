@@ -60,32 +60,17 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity T80_ALU is
-	generic(
-		Mode : integer := 0;
-		Flag_N : integer := 1;
-		Flag_P : integer := 2;
-		Flag_X : integer := 3;
-		Flag_H : integer := 4;
-		Flag_Y : integer := 5;
-		Flag_Z : integer := 6;
-		Flag_S : integer := 7
-	);
 	port(
-		Arith16		: in std_logic;
-		Z16			: in std_logic;
-		ALU_Op		: in std_logic_vector(3 downto 0);
-		IR			: in std_logic_vector(5 downto 0);
-		ISet		: in std_logic_vector(1 downto 0);
-		BusA		: in std_logic_vector(7 downto 0);
-		BusB		: in std_logic_vector(7 downto 0);
-		F_In		: in std_logic_vector(7 downto 0);
-		Q			: out std_logic_vector(7 downto 0);
-		F_Out		: out std_logic_vector(7 downto 0)
+		Arith16, Z16: in std_logic;
+		ALU_Op: in std_logic_vector(3 downto 0);
+		IR: in std_logic_vector(5 downto 0);
+		ISet: in std_logic_vector(1 downto 0);
+		BusA, BusB, F_In: in std_logic_vector(7 downto 0);
+		Q, F_Out: out std_logic_vector(7 downto 0)
 	);
 end T80_ALU;
 
 architecture rtl of T80_ALU is
-
 	procedure AddSub(A : std_logic_vector;
 					B : std_logic_vector;
 					Sub : std_logic;
@@ -141,71 +126,71 @@ begin
 		DAA_Q := "---------";
 		case ALU_Op is
 		when "0000" | "0001" |  "0010" | "0011" | "0100" | "0101" | "0110" | "0111" =>
-			F_Out(Flag_N) <= '0';
+			F_Out(1) <= '0';
 			F_Out(0) <= '0';
 			case ALU_OP(2 downto 0) is
 			when "000" | "001" => -- ADD, ADC
 				Q_t := Q_v;
 				F_Out(0) <= Carry_v;
-				F_Out(Flag_H) <= HalfCarry_v;
-				F_Out(Flag_P) <= OverFlow_v;
+				F_Out(4) <= HalfCarry_v;
+				F_Out(2) <= OverFlow_v;
 			when "010" | "011" | "111" => -- SUB, SBC, CP
 				Q_t := Q_v;
-				F_Out(Flag_N) <= '1';
+				F_Out(1) <= '1';
 				F_Out(0) <= not Carry_v;
-				F_Out(Flag_H) <= not HalfCarry_v;
-				F_Out(Flag_P) <= OverFlow_v;
+				F_Out(4) <= not HalfCarry_v;
+				F_Out(2) <= OverFlow_v;
 			when "100" => -- AND
 				Q_t(7 downto 0) := BusA and BusB;
-				F_Out(Flag_H) <= '1';
+				F_Out(4) <= '1';
 			when "101" => -- XOR
 				Q_t(7 downto 0) := BusA xor BusB;
-				F_Out(Flag_H) <= '0';
+				F_Out(4) <= '0';
 			when others => -- OR "110"
 				Q_t(7 downto 0) := BusA or BusB;
-				F_Out(Flag_H) <= '0';
+				F_Out(4) <= '0';
 			end case;
 			if ALU_Op(2 downto 0) = "111" then -- CP
-				F_Out(Flag_X) <= BusB(3);
-				F_Out(Flag_Y) <= BusB(5);
+				F_Out(3) <= BusB(3);
+				F_Out(5) <= BusB(5);
 			else
-				F_Out(Flag_X) <= Q_t(3);
-				F_Out(Flag_Y) <= Q_t(5);
+				F_Out(3) <= Q_t(3);
+				F_Out(5) <= Q_t(5);
 			end if;
 			if Q_t(7 downto 0) = "00000000" then
-				F_Out(Flag_Z) <= '1';
+				F_Out(6) <= '1';
 				if Z16 = '1' then
-					F_Out(Flag_Z) <= F_In(Flag_Z);	-- 16 bit ADC,SBC
+					F_Out(6) <= F_In(6);	-- 16 bit ADC,SBC
 				end if;
 			else
-				F_Out(Flag_Z) <= '0';
+				F_Out(6) <= '0';
 			end if;
-			F_Out(Flag_S) <= Q_t(7);
+			F_Out(7) <= Q_t(7);
 			case ALU_Op(2 downto 0) is
 			when "000" | "001" | "010" | "011" | "111" => -- ADD, ADC, SUB, SBC, CP
 			when others =>
-				F_Out(Flag_P) <= not (Q_t(0) xor Q_t(1) xor Q_t(2) xor Q_t(3) xor
+				F_Out(2) <= not (Q_t(0) xor Q_t(1) xor Q_t(2) xor Q_t(3) xor
 					Q_t(4) xor Q_t(5) xor Q_t(6) xor Q_t(7));
 			end case;
 			if Arith16 = '1' then
-				F_Out(Flag_S) <= F_In(Flag_S);
-				F_Out(Flag_Z) <= F_In(Flag_Z);
-				F_Out(Flag_P) <= F_In(Flag_P);
+				F_Out(7) <= F_In(7);
+				F_Out(6) <= F_In(6);
+				F_Out(2) <= F_In(2);
 			end if;
 		when "1100" =>
 			-- DAA
-			F_Out(Flag_H) <= F_In(Flag_H);
+			F_Out(4) <= F_In(4);
 			F_Out(0) <= F_In(0);
 			DAA_Q(7 downto 0) := unsigned(BusA);
 			DAA_Q(8) := '0';
-			if F_In(Flag_N) = '0' then
+			if F_In(1) = '0' then
 				-- After addition
 				-- Alow > 9 or H = 1
-				if DAA_Q(3 downto 0) > 9 or F_In(Flag_H) = '1' then
+				if DAA_Q(3 downto 0) > 9 or F_In(4) = '1' then
 					if (DAA_Q(3 downto 0) > 9) then
-						F_Out(Flag_H) <= '1';
+						F_Out(4) <= '1';
 					else
-						F_Out(Flag_H) <= '0';
+						F_Out(4) <= '0';
 					end if;
 					DAA_Q := DAA_Q + 6;
 				end if;
@@ -215,9 +200,9 @@ begin
 				end if;
 			else
 				-- After subtraction
-				if DAA_Q(3 downto 0) > 9 or F_In(Flag_H) = '1' then
+				if DAA_Q(3 downto 0) > 9 or F_In(4) = '1' then
 					if DAA_Q(3 downto 0) > 5 then
-						F_Out(Flag_H) <= '0';
+						F_Out(4) <= '0';
 					end if;
 					DAA_Q(7 downto 0) := DAA_Q(7 downto 0) - 6;
 				end if;
@@ -225,17 +210,17 @@ begin
 					DAA_Q := DAA_Q - 352; -- 0x160
 				end if;
 			end if;
-			F_Out(Flag_X) <= DAA_Q(3);
-			F_Out(Flag_Y) <= DAA_Q(5);
+			F_Out(3) <= DAA_Q(3);
+			F_Out(5) <= DAA_Q(5);
 			F_Out(0) <= F_In(0) or DAA_Q(8);
 			Q_t := std_logic_vector(DAA_Q(7 downto 0));
 			if DAA_Q(7 downto 0) = "00000000" then
-				F_Out(Flag_Z) <= '1';
+				F_Out(6) <= '1';
 			else
-				F_Out(Flag_Z) <= '0';
+				F_Out(6) <= '0';
 			end if;
-			F_Out(Flag_S) <= DAA_Q(7);
-			F_Out(Flag_P) <= not (DAA_Q(0) xor DAA_Q(1) xor DAA_Q(2) xor DAA_Q(3) xor
+			F_Out(7) <= DAA_Q(7);
+			F_Out(2) <= not (DAA_Q(0) xor DAA_Q(1) xor DAA_Q(2) xor DAA_Q(3) xor
 				DAA_Q(4) xor DAA_Q(5) xor DAA_Q(6) xor DAA_Q(7));
 		when "1101" | "1110" =>
 			-- RLD, RRD
@@ -245,36 +230,36 @@ begin
 			else
 				Q_t(3 downto 0) := BusB(3 downto 0);
 			end if;
-			F_Out(Flag_H) <= '0';
-			F_Out(Flag_N) <= '0';
-			F_Out(Flag_X) <= Q_t(3);
-			F_Out(Flag_Y) <= Q_t(5);
+			F_Out(4) <= '0';
+			F_Out(1) <= '0';
+			F_Out(3) <= Q_t(3);
+			F_Out(5) <= Q_t(5);
 			if Q_t(7 downto 0) = "00000000" then
-				F_Out(Flag_Z) <= '1';
+				F_Out(6) <= '1';
 			else
-				F_Out(Flag_Z) <= '0';
+				F_Out(6) <= '0';
 			end if;
-			F_Out(Flag_S) <= Q_t(7);
-			F_Out(Flag_P) <= not (Q_t(0) xor Q_t(1) xor Q_t(2) xor Q_t(3) xor
+			F_Out(7) <= Q_t(7);
+			F_Out(2) <= not (Q_t(0) xor Q_t(1) xor Q_t(2) xor Q_t(3) xor
 				Q_t(4) xor Q_t(5) xor Q_t(6) xor Q_t(7));
 		when "1001" =>
 			-- BIT
 			Q_t(7 downto 0) := BusB and BitMask;
-			F_Out(Flag_S) <= Q_t(7);
+			F_Out(7) <= Q_t(7);
 			if Q_t(7 downto 0) = "00000000" then
-				F_Out(Flag_Z) <= '1';
-				F_Out(Flag_P) <= '1';
+				F_Out(6) <= '1';
+				F_Out(2) <= '1';
 			else
-				F_Out(Flag_Z) <= '0';
-				F_Out(Flag_P) <= '0';
+				F_Out(6) <= '0';
+				F_Out(2) <= '0';
 			end if;
-			F_Out(Flag_H) <= '1';
-			F_Out(Flag_N) <= '0';
-			F_Out(Flag_X) <= '0';
-			F_Out(Flag_Y) <= '0';
+			F_Out(4) <= '1';
+			F_Out(1) <= '0';
+			F_Out(3) <= '0';
+			F_Out(5) <= '0';
 			if IR(2 downto 0) /= "110" then
-				F_Out(Flag_X) <= BusB(3);
-				F_Out(Flag_Y) <= BusB(5);
+				F_Out(3) <= BusB(3);
+				F_Out(5) <= BusB(5);
 			end if;
 		when "1010" =>
 			-- SET
@@ -306,15 +291,9 @@ begin
 				Q_t(0) := '0';
 				F_Out(0) <= BusA(7);
 			when "110" => -- SLL (Undocumented) / SWAP
-				if Mode = 3 then
-					Q_t(7 downto 4) := BusA(3 downto 0);
-					Q_t(3 downto 0) := BusA(7 downto 4);
-					F_Out(0) <= '0';
-				else
-					Q_t(7 downto 1) := BusA(6 downto 0);
-					Q_t(0) := '1';
-					F_Out(0) <= BusA(7);
-				end if;
+				Q_t(7 downto 1) := BusA(6 downto 0);
+				Q_t(0) := '1';
+				F_Out(0) <= BusA(7);
 			when "101" => -- SRA
 				Q_t(6 downto 0) := BusA(7 downto 1);
 				Q_t(7) := BusA(7);
@@ -324,22 +303,22 @@ begin
 				Q_t(7) := '0';
 				F_Out(0) <= BusA(0);
 			end case;
-			F_Out(Flag_H) <= '0';
-			F_Out(Flag_N) <= '0';
-			F_Out(Flag_X) <= Q_t(3);
-			F_Out(Flag_Y) <= Q_t(5);
-			F_Out(Flag_S) <= Q_t(7);
+			F_Out(4) <= '0';
+			F_Out(1) <= '0';
+			F_Out(3) <= Q_t(3);
+			F_Out(5) <= Q_t(5);
+			F_Out(7) <= Q_t(7);
 			if Q_t(7 downto 0) = "00000000" then
-				F_Out(Flag_Z) <= '1';
+				F_Out(6) <= '1';
 			else
-				F_Out(Flag_Z) <= '0';
+				F_Out(6) <= '0';
 			end if;
-			F_Out(Flag_P) <= not (Q_t(0) xor Q_t(1) xor Q_t(2) xor Q_t(3) xor
+			F_Out(2) <= not (Q_t(0) xor Q_t(1) xor Q_t(2) xor Q_t(3) xor
 				Q_t(4) xor Q_t(5) xor Q_t(6) xor Q_t(7));
 			if ISet = "00" then
-				F_Out(Flag_P) <= F_In(Flag_P);
-				F_Out(Flag_S) <= F_In(Flag_S);
-				F_Out(Flag_Z) <= F_In(Flag_Z);
+				F_Out(2) <= F_In(2);
+				F_Out(7) <= F_In(7);
+				F_Out(6) <= F_In(6);
 			end if;
 		when others =>
 			null;

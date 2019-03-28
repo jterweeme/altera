@@ -45,7 +45,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.T80_Pack.all;
 
 entity T80s is
 	port(
@@ -70,18 +69,14 @@ entity T80s is
 end T80s;
 
 architecture rtl of T80s is
-	signal CEN			: std_logic;
-	signal IntCycle_n	: std_logic;
-	signal NoRead		: std_logic;
-	signal Write		: std_logic;
-	signal IORQ			: std_logic;
-	signal DI_Reg		: std_logic_vector(7 downto 0);
-	signal MCycle		: std_logic_vector(2 downto 0);
-	signal TState		: std_logic_vector(2 downto 0);
+signal CEN, IntCycle_n, NoRead, Write, IORQ: std_logic;
+signal DI_Reg: std_logic_vector(7 downto 0);
+signal MCycle: std_logic_vector(2 downto 0);
+signal TState: std_logic_vector(2 downto 0);
 begin
 	CEN <= '1';
 
-	u0: T80 port map(
+	u0: entity work.T80 port map(
 			CEN => CEN,
 			M1_n => M1_n,
 			IORQ => IORQ,
@@ -143,5 +138,6 @@ begin
 			end if;
 		end if;
 	end process;
-
 end;
+
+

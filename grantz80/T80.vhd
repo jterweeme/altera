@@ -70,37 +70,24 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.T80_Pack.all;
 
 entity T80 is
-    generic(
-        Mode : integer := 1;	-- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
-        IOWait : integer := 0;	-- 1 => Single cycle I/O, 1 => Std I/O cycle
-        Flag_C : integer := 0;
-        Flag_N : integer := 1;
-        Flag_P : integer := 2;
-        Flag_X : integer := 3;
-        Flag_H : integer := 4;
-        Flag_Y : integer := 5;
-        Flag_Z : integer := 6;
-        Flag_S : integer := 7
-    );
     port(
-		RESET_n		: in std_logic;
-		CLK_n		: in std_logic;
-		CEN			: in std_logic;
-		WAIT_n		: in std_logic;
-		INT_n		: in std_logic;
-		NMI_n		: in std_logic;
-		BUSRQ_n		: in std_logic;
-		M1_n		: out std_logic;
-		IORQ		: out std_logic;
-		NoRead		: out std_logic;
-		Write		: out std_logic;
-		RFSH_n		: out std_logic;
-		HALT_n		: out std_logic;
-		BUSAK_n		: out std_logic;
-		A			: out std_logic_vector(15 downto 0);
+        RESET_n: in std_logic;
+		CLK_n: in std_logic;
+		CEN: in std_logic;
+		WAIT_n: in std_logic;
+		INT_n: in std_logic;
+		NMI_n: in std_logic;
+		BUSRQ_n: in std_logic;
+		M1_n: out std_logic;
+		IORQ: out std_logic;
+		NoRead: out std_logic;
+		Write: out std_logic;
+		RFSH_n: out std_logic;
+		HALT_n: out std_logic;
+		BUSAK_n: out std_logic;
+		A: out std_logic_vector(15 downto 0);
 		DInst		: in std_logic_vector(7 downto 0);
 		DI			: in std_logic_vector(7 downto 0);
 		DO			: out std_logic_vector(7 downto 0);
@@ -113,23 +100,28 @@ entity T80 is
 end T80;
 
 architecture rtl of T80 is
-
-	constant aNone	: std_logic_vector(2 downto 0) := "111";
-	constant aBC	: std_logic_vector(2 downto 0) := "000";
-	constant aDE	: std_logic_vector(2 downto 0) := "001";
-	constant aXY	: std_logic_vector(2 downto 0) := "010";
-	constant aIOA	: std_logic_vector(2 downto 0) := "100";
-	constant aSP	: std_logic_vector(2 downto 0) := "101";
-	constant aZI	: std_logic_vector(2 downto 0) := "110";
+    constant Mode: integer := 1;
+    constant IOWait: integer := 0;
+    constant Flag_C: integer := 0;
+    constant Flag_N: integer := 1;
+    constant Flag_P: integer := 2;
+    constant Flag_X: integer := 3;
+    constant Flag_H: integer := 4;
+    constant Flag_Y: integer := 5;
+    constant Flag_Z: integer := 6;
+    constant Flag_S: integer := 7;
+	constant aNone: std_logic_vector(2 downto 0) := "111";
+	constant aBC: std_logic_vector(2 downto 0) := "000";
+	constant aDE: std_logic_vector(2 downto 0) := "001";
+	constant aXY: std_logic_vector(2 downto 0) := "010";
+	constant aIOA: std_logic_vector(2 downto 0) := "100";
+	constant aSP: std_logic_vector(2 downto 0) := "101";
+	constant aZI: std_logic_vector(2 downto 0) := "110";
 
 	-- Registers
-	signal ACC, F			: std_logic_vector(7 downto 0);
-	signal Ap, Fp			: std_logic_vector(7 downto 0);
-	signal I				: std_logic_vector(7 downto 0);
+	signal ACC, F, Ap, Fp, I, RegDIH, RegDIL: std_logic_vector(7 downto 0);
 	signal R				: unsigned(7 downto 0);
 	signal SP, PC			: unsigned(15 downto 0);
-	signal RegDIH			: std_logic_vector(7 downto 0);
-	signal RegDIL			: std_logic_vector(7 downto 0);
 	signal RegBusA			: std_logic_vector(15 downto 0);
 	signal RegBusB			: std_logic_vector(15 downto 0);
 	signal RegBusC			: std_logic_vector(15 downto 0);
@@ -177,10 +169,7 @@ architecture rtl of T80 is
 	signal IncDecZ			: std_logic;
 
 	-- ALU signals
-	signal BusB				: std_logic_vector(7 downto 0);
-	signal BusA				: std_logic_vector(7 downto 0);
-	signal ALU_Q			: std_logic_vector(7 downto 0);
-	signal F_Out			: std_logic_vector(7 downto 0);
+	signal BusB, BusA, ALU_Q, F_Out: std_logic_vector(7 downto 0);
 
 	-- Registered micro code outputs
 	signal Read_To_Reg_r	: std_logic_vector(4 downto 0);
@@ -237,19 +226,8 @@ architecture rtl of T80 is
 	signal SetEI			: std_logic;
 	signal IMode			: std_logic_vector(1 downto 0);
 	signal Halt				: std_logic;
-
 begin
-
-	mcode : T80_MCode
-		generic map(
-			Flag_C => Flag_C,
-			Flag_N => Flag_N,
-			Flag_P => Flag_P,
-			Flag_X => Flag_X,
-			Flag_H => Flag_H,
-			Flag_Y => Flag_Y,
-			Flag_Z => Flag_Z,
-			Flag_S => Flag_S)
+    mcode: entity work.T80_MCode
 		port map(
 			IR => IR,
 			ISet => ISet,
@@ -304,17 +282,7 @@ begin
 			NoRead => NoRead,
 			Write => Write);
 
-	alu : T80_ALU
-		generic map(
-			Mode => Mode,
-			Flag_N => Flag_N,
-			Flag_P => Flag_P,
-			Flag_X => Flag_X,
-			Flag_H => Flag_H,
-			Flag_Y => Flag_Y,
-			Flag_Z => Flag_Z,
-			Flag_S => Flag_S)
-		port map(
+	alu : entity work.T80_ALU port map(
 			Arith16 => Arith16_r,
 			Z16 => Z16_r,
 			ALU_Op => ALU_Op_r,
@@ -786,8 +754,7 @@ begin
 		end if;
 	end process;
 
-	Regs : T80_Reg
-		port map(
+	Regs: entity work.T80_Reg port map(
 			Clk => CLK_n,
 			CEN => ClkEn,
 			WEH => RegWEH,
